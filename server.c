@@ -1,78 +1,60 @@
 #include<stdio.h>
-# include<sys/socket.h>
-# include<arpa/inet.h> //inet_addr
+#include<stdlib.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
+#include<string.h> //inet_addr
 int main (int argc, char *argv[])
 {
 
-int socket_desc, new_socket,c;
-struct sockaddr_in server,client;
+	int socket_desc,mysock,rval;
+	struct sockaddr_in serv_addr;
+	char buff[1024];
 
-//CREATE SOCKET
-socket_desc = socket(AF_INET, SOCK_STREAM, 0);
+	//CREATE SOCKET
+	socket_desc = socket(AF_INET, SOCK_STREAM, 0);
 
-if (socket_desc ==-1)
-{
-printf("Could not create socket");
+	if (socket_desc < 0)
+	{
+		printf("Failed to create socket");
+		exit(1);
+	}
+
+
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port =htons(2500);
+
+	//Bind
+	if(bind(socket_desc,(struct sockaddr *)&serv_addr,sizeof (serv_addr)))
+	{
+		perror("bind failed");
+		exit(1);	
 }
-
-server.sin_addr.s_addr = inet_addr("74.125.235.20");
-server.sin_family = AF_INET;
-server.sin_port = htons(1026);
-
-//CONNECT TO REMOTE SERVER
-
-if(connect(socket_desc,(struct sockaddr *)&server, sizeof(server))<0)
-{
-	puts("connect error");
-	return 1;
-}
-puts("connected");
-
-//Bind
-if(bind(socket_desc,(struct sockaddr *)&server ,sizeof (server))<0)
-{
-	puts("bind failed");
-}
-puts("BIND DONE!!");
-
 
 //Listen
-listen(socket_desc,3);
+listen(socket_desc,5);
 //Accept and incoming connection 
-puts("Waiting for incoming connection..");
-c= sizeof (struct sockaddr_in);
-new_socket=accept(socket_desc,(struct sockaddr *)&client,(socklen_t*)&c);
-
-if(new_socket<0)
+do{
+mysock = accept(socket_desc,(struct sockaddr *)0,0);
+if(mysock ==-1)
 {
 perror("accept failed");
 }
-puts("Connection accepted");
-
-
-//IPv4 AF_INET sockets:
-struct sockaddr_in
+else
 {
-short sin_family;
-unsigned short sin_port[htons(1026)];
-struct in_addr sin_addr;
-char sin_zero[10];
-};
-
-
-struct in_addr
-{
-unsigned long s_addr;
-
-};
-
-struct sockaddr
-{
-unsigned short sa_family;
-char sa_data [14];
-};
-
+memset(buff, 0, sizeof(buff));
+if((rval = recv(mysock,buff,sizeof(buff),0))<0)
+perror("readimg message error");
+else if(rval == 0)
+printf("ending connection");
+else
+printf("MSG : %s\n",buff);
+printf("got the message (rval = %d)\n",rval);
+close (mysock);
+}
+}
+while(1);
 
 return 0;
-
 }
