@@ -8,12 +8,14 @@ int main (int argc, char *argv[])
 {
 
 	int socket_desc,mysock,rval;
+	int op_val,route;
 	struct sockaddr_in serv_addr;
 	char buff[1024];
 
+
 	//CREATE SOCKET
 	socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-
+ 
 	if (socket_desc < 0)
 	{
 		printf("Failed to create socket");
@@ -51,6 +53,23 @@ printf("ending connection");
 else
 printf("MSG : %s\n",buff);
 printf("got the message (rval = %d)\n",rval);
+
+getsockopt(socket_desc,SOL_SOCKET, SO_DONTROUTE, &op_val, &route);
+if(op_val != 0)
+{
+	printf ("UNABLE TO GET \n");
+}
+printf("Get SO_DONTROUTE : %d\n", op_val);
+op_val = 1;
+setsockopt(socket_desc, SOL_SOCKET, SO_DONTROUTE, &op_val, sizeof(op_val));
+	printf("ALREADY set \n");
+getsockopt(socket_desc, SOL_SOCKET, SO_DONTROUTE, &op_val, &route);
+if(op_val == 0)
+	printf("UNABLE TO GET \n");
+else
+	printf("GET NEW SO_DONTROUTE : %d\n",op_val);
+
+
 close (mysock);
 }
 }
